@@ -1,0 +1,38 @@
+name: Desktop app release
+
+on:
+  push:
+    branches:
+      - Thriftbloom
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build executable JAR
+        run: mvn --batch-mode clean package
+
+      - name: Publish download
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create "desktop-${GITHUB_RUN_NUMBER}" \
+            target/thrift-1.0.0-jar-with-dependencies.jar \
+            --title "Desktop app build ${GITHUB_RUN_NUMBER}" \
+            --notes "Executable Java desktop app. See README.md for MySQL setup." \
+            --latest
